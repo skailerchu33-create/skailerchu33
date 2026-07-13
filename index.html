@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevFluent - Advanced Code Tutorials & Skills Platform</title>
+  <meta name="description" content="Improve code understanding for engineers, students, and educators. Access top-tier tutorials online or offline, consult with AI assistants, and book sessions.">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Ambient background glow blobs representing future-tech aesthetics -->
+  <div class="ambient-glow glow-primary"></div>
+  <div class="ambient-glow glow-secondary"></div>
+
+  <!-- User Notification Toast -->
+  <div id="toast" class="toast-notice">Success Action Completed!</div>
+
+  <div class="app-container">
+    
+    <!-- Navigation Sidebar -->
+    <aside id="app-sidebar" class="sidebar">
+      <a href="#" class="logo-container">
+        <div class="logo-icon">&lt;/&gt;</div>
+        <div class="logo-text">DevFluent</div>
+      </a>
+      
+      <nav style="flex: 1;">
+        <ul class="nav-links">
+          <li class="nav-item active" data-page="home">
+            <a onclick="navigateTo('home')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Home</span>
+            </a>
+          </li>
+          <li class="nav-item" data-page="about">
+            <a onclick="navigateTo('about')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>About</span>
+            </a>
+          </li>
+          <li class="nav-item" data-page="services">
+            <a onclick="navigateTo('services')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9.09 9 1-1a3 3 0 0 1 5.4 1.34c0 .87-.5 1.34-1 1.84l-.5.5"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>Services</span>
+            </a>
+          </li>
+          <li class="nav-item" data-page="shop">
+            <a onclick="navigateTo('shop')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              <span>Shop</span>
+            </a>
+          </li>
+          <li class="nav-item" data-page="contact">
+            <a onclick="navigateTo('contact')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>
+              <span>Contact</span>
+            </a>
+          </li>
+          <li class="nav-item" data-page="settings">
+            <a onclick="navigateTo('settings')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>Settings / CMS</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p style="font-size: 0.75rem; color: hsl(var(--text-muted)); text-align: center;">© 2026 DevFluent Inc.</p>
+      </div>
+    </aside>
+
+    <!-- Main Content Frame -->
+    <div class="main-wrapper">
+      
+      <!-- Top Sticky Header -->
+      <header class="top-header">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <button id="menu-toggle-btn" class="mobile-nav-toggle" onclick="toggleSidebar()">
+            <svg style="width: 24px; height: 24px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="search-wrapper">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-bar" class="search-input" placeholder="Search lessons, docs, skills..." onkeyup="filterContent()">
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Offline/Online Mode toggle -->
+          <button id="offline-toggle" class="offline-simulator-btn" onclick="toggleOfflineMode()">
+            <div class="offline-status-dot"></div>
+            <span id="offline-lbl">Online Mode</span>
+          </button>
+
+          <!-- Light/Dark Mode toggle -->
+          <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()">
+            <svg id="theme-icon" style="width: 16px; height: 16px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            <span id="theme-lbl">Dark</span>
+          </button>
+
+          <!-- Quick User profile button redirection -->
+          <a class="profile-badge" onclick="navigateTo('profile')">
+            <div id="user-badge-avatar" class="profile-avatar">G</div>
+            <span id="user-badge-name" class="profile-name">Guest</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Dynamic Page Sections -->
+      <main class="content-body">
+
+        <!-- 1. Home Section -->
+        <section id="page-home" class="page-section active">
+          <div class="hero-grid">
+            <div class="hero-left">
+              <span class="badge">Next-Gen Code Sandbox</span>
+              <h1 id="cms-hero-title">Master Code In Depth & Offline</h1>
+              <p id="cms-hero-para">Gain structural engineering concepts using step-by-step visualized tutorials. Sync to your local device to continue studying in remote regions or on flight.</p>
+              <div style="display: flex; gap: 16px;">
+                <button class="btn btn-primary" onclick="startLatestTutorial()">Start Learning</button>
+                <button class="btn btn-secondary" onclick="navigateTo('about')">Read Concept</button>
+              </div>
+              <div class="stat-strip">
+                <div class="stat-item">
+                  <span class="stat-num" id="stat-students">12,450+</span>
+                  <span class="stat-lbl">Active Learners</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-num" id="stat-lessons">85</span>
+                  <span class="stat-lbl">Visual Lessons</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-num">99.8%</span>
+                  <span class="stat-lbl">Satisfaction</span>
+                </div>
+              </div>
+            </div>
+            <div class="hero-right">
+              <div class="floating-graphics-box">
+                <div class="graphic-element graphic-code">
+                  const skills = ['JS', 'React', 'CSS'];
+                </div>
+                <div class="graphic-element graphic-ai">
+                  <span>✨ AI Active</span>
+                </div>
+                <div class="graphic-element graphic-widget">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                  <span>Sync Complete</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+            <div>
+              <h2 style="font-family: var(--font-display); font-size: 1.75rem; font-weight: 700;">Interactive Code Lessons</h2>
+              <p style="color: hsl(var(--text-secondary)); font-size: 0.9rem; margin-top: 4px;">Click a tutorial to enter the interactive workspace & sync.</p>
+            </div>
+          </div>
+
+          <!-- Lessons Grid -->
+          <div class="tutorials-grid" id="tutorials-list-container">
+            <!-- Dynamic Content loaded via app.js -->
+          </div>
+
+          <!-- Nested Sandbox Viewer (appears below elements contextually or when a tutorial is clicked) -->
+          <div id="sandbox-section" style="display: none; margin-top: 56px; border-top: 1px solid var(--glass-border); padding-top: 48px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+              <div>
+                <span class="badge" style="background: hsla(var(--secondary-hsl), 0.15); color: hsl(var(--secondary-hsl))">Visual Sandbox Room</span>
+                <h3 id="sandbox-title" style="font-size: 1.5rem; font-family: var(--font-display); font-weight: 700;">Loading tutorial...</h3>
+              </div>
+              <button class="btn btn-secondary" onclick="closeSandbox()" style="padding: 6px 12px; font-size: 0.8rem;">✕ Close Workspace</button>
+            </div>
+
+            <div class="sandbox-grid">
+              <div>
+                <!-- Mock Video Player with rich timeline and indicators -->
+                <div class="video-container">
+                  <div id="video-placeholder-graphic" style="position: absolute; inset: 0; background: linear-gradient(135deg, #090a0f, #1e2640); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                      <svg style="width: 24px; height: 24px; color: hsl(var(--primary-hsl));" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h4 id="video-sim-title" style="font-size: 1.05rem; font-weight: 600; margin-bottom: 4px;">Video: Syncing Code Context</h4>
+                    <p style="font-size: 0.8rem; color: hsl(var(--text-muted));">Simulated visual playback track</p>
+                  </div>
+                  <!-- Timeline indicator -->
+                  <div class="sim-controls">
+                    <div class="sim-timeline" onclick="seekVideo(event)">
+                      <div class="sim-progress" id="video-sim-progress"></div>
+                    </div>
+                    <div class="sim-btn-row">
+                      <div style="display: flex; gap: 12px; align-items: center;">
+                        <button onclick="togglePlayState()" style="background: none; border: none; color: #fff; cursor: pointer;">
+                          <span id="play-pause-btn-lbl">⏸ Pause</span>
+                        </button>
+                        <span id="video-timer">01:10 / 03:45</span>
+                      </div>
+                      <div>
+                        <select class="video-speed-selector" id="video-speed" onchange="changeSpeed(this)">
+                          <option value="1">1.0x Speed</option>
+                          <option value="1.5">1.5x Speed</option>
+                          <option value="2">2.0x Speed</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Comment section belonging to this tutorial -->
+                <div class="comments-container">
+                  <h4 style="font-size: 1.25rem; font-family: var(--font-display); font-weight: 700;">Discussion Comments</h4>
+                  <p style="color: hsl(var(--text-muted)); font-size: 0.85rem; margin-bottom: 20px;">Participate in the study guild chat</p>
+                  
+                  <form id="comment-form" onsubmit="addComment(event)" class="form-group" style="gap: 12px;">
+                    <textarea class="input-box" id="new-comment-text" placeholder="Write a comment... (Markdown formatting supported)" required style="min-height: 80px;"></textarea>
+                    <div style="display: flex; justify-content: flex-end;">
+                      <button type="submit" class="btn btn-primary" style="padding: 8px 18px; font-size: 0.85rem;">Post Comment</button>
+                    </div>
+                  </form>
+
+                  <div class="comments-list" id="comments-list-box">
+                    <!-- Dynamic Comments will populate here -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Code Sandbox Editor -->
+              <div>
+                <div class="code-editor-panel">
+                  <div class="editor-header">
+                    <span>main.js</span>
+                    <span style="color: hsl(var(--primary-hsl));">JS Exec Terminal</span>
+                  </div>
+                  <textarea id="sandbox-editor-code" class="editor-textarea" spellcheck="false">// Write your Javascript code below
+function calculateSkills() {
+  console.log("Analyzing local components...");
+  return "Engineering skills upgraded!";
+}
+console.log(calculateSkills());</textarea>
+                  <div class="editor-footer">
+                    <div style="display: flex; gap: 8px;">
+                      <button id="sim-download-tutorial" class="btn btn-secondary" onclick="simulateLocalSync()" style="padding: 6px 12px; font-size: 0.8rem;">
+                        📥 Download offline
+                      </button>
+                    </div>
+                    <button class="btn btn-primary" onclick="runSandboxCode()" style="padding: 6px 16px; font-size: 0.85rem;">
+                      🚀 Run Code
+                    </button>
+                  </div>
+                </div>
+                <!-- Console log outputs -->
+                <div class="sandbox-console" id="sandbox-console-out">> Output will render here...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. About Section -->
+        <section id="page-about" class="page-section">
+          <div class="about-grid">
+            <div>
+              <span class="badge">Concept & Vision</span>
+              <h2 class="section-title">Visualizing Complexity, Anywhere</h2>
+              <p style="color: hsl(var(--text-secondary)); line-height: 1.6; margin-bottom: 16px;">
+                DevFluent was built from the ground up to solve a fundamental barrier in tech education: access to modern high-tech visual explanations. Engineering is often abstract, but DevFluent breaks down structures through code-synced video timelines.
+              </p>
+              <p style="color: hsl(var(--text-secondary)); line-height: 1.6; margin-bottom: 24px;">
+                Understanding that tech students often reside in low-bandwidth regions, we engineered a state-of-the-art **Offline Sync** pipeline. Download tutorials directly into local web databases to execute, simulate and watch without internet.
+              </p>
+              <div class="glass-card" style="padding: 16px; display: flex; gap: 14px; align-items: flex-start;">
+                <div style="background: hsla(var(--primary-hsl), 0.15); padding: 8px; border-radius: var(--radius-sm); color: hsl(var(--primary-hsl));">
+                  ⚡
+                </div>
+                <div>
+                  <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 4px;">Target Audience</h4>
+                  <p style="font-size: 0.825rem; color: hsl(var(--text-muted));">Teachers showing visual slides, students, beginners starting their programming journey, and professionals from ages 15 to 45.</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="glass-card" style="display: flex; flex-direction: column; gap: 20px;">
+                <h3 style="font-family: var(--font-display); font-size: 1.25rem;">Core Values</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <div style="display: flex; gap: 10px; align-items: center; font-size: 0.9rem;">
+                    <span style="color: hsl(var(--primary-hsl)); font-weight: 700;">✓</span> <span>High performance load times under 2 seconds.</span>
+                  </div>
+                  <div style="display: flex; gap: 10px; align-items: center; font-size: 0.9rem;">
+                    <span style="color: hsl(var(--primary-hsl)); font-weight: 700;">✓</span> <span>Stripe, MTN, Orange payment processing.</span>
+                  </div>
+                  <div style="display: flex; gap: 10px; align-items: center; font-size: 0.9rem;">
+                    <span style="color: hsl(var(--primary-hsl)); font-weight: 700;">✓</span> <span>Instant feedback AI assistance sandbox.</span>
+                  </div>
+                  <div style="display: flex; gap: 10px; align-items: center; font-size: 0.9rem;">
+                    <span style="color: hsl(var(--primary-hsl)); font-weight: 700;">✓</span> <span>WordPress/Shopify style custom CMS nodes.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Services / Consulting Section -->
+        <section id="page-services" class="page-section">
+          <h2 class="section-title">Our Services</h2>
+          <p class="section-subtitle">Book visual guidance sessions or purchase premium enterprise coaching</p>
+          
+          <div class="services-layout">
+            <div class="services-list">
+              <div class="glass-card">
+                <span class="badge" style="background: hsla(var(--accent-hsl), 0.15); color: hsl(var(--accent-hsl))">1-on-1 Guidance</span>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">Technical Syllabus Review</h3>
+                <p style="font-size: 0.9rem; color: hsl(var(--text-secondary)); margin-bottom: 16px;">Go through code paradigms live with an expert engineer. Ask questions, analyze structural components.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">$45.00 / hr</span>
+                  <span style="font-size: 0.8rem; color: hsl(var(--text-muted));">Booking slot required</span>
+                </div>
+              </div>
+
+              <div class="glass-card">
+                <span class="badge">AI Agent Review</span>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px;">Enterprise AI Code Architect</h3>
+                <p style="font-size: 0.9rem; color: hsl(var(--text-secondary)); margin-bottom: 16px;">Deploy our custom AI model within your enterprise network to analyze proprietary codebase trees.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">$199.00 / mo</span>
+                  <span style="font-size: 0.8rem; color: hsl(var(--text-muted));">Self-serve Shop</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Booking Calendar UI -->
+            <div class="glass-card calendar-card">
+              <div class="calendar-header">
+                <h4 style="font-weight: 700; font-family: var(--font-display); font-size: 1.15rem;">Reserve Visual Mentoring</h4>
+                <span id="calendar-current-month" style="font-size: 0.9rem; font-weight: 600; color: hsl(var(--primary-hsl))">July 2026</span>
+              </div>
+              
+              <div class="calendar-grid" id="calendar-days-container">
+                <!-- Loaded dynamically by App JS -->
+              </div>
+
+              <div class="event-scheduler-pane" id="scheduler-details-pane" style="display: none;">
+                <h5 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Available hours for <span id="selected-schedule-day">15th</span>:</h5>
+                <div class="time-slot-grid">
+                  <div class="time-slot" onclick="selectTimeSlot(this, '09:00 AM')">09:00 AM</div>
+                  <div class="time-slot" onclick="selectTimeSlot(this, '11:30 AM')">11:30 AM</div>
+                  <div class="time-slot" onclick="selectTimeSlot(this, '02:00 PM')">02:00 PM</div>
+                  <div class="time-slot" onclick="selectTimeSlot(this, '04:30 PM')">04:30 PM</div>
+                </div>
+
+                <form id="booking-submit-form" onsubmit="submitBooking(event)" class="form-group" style="margin-top: 16px;">
+                  <label for="booking-email">Attendee Contact Email</label>
+                  <input type="email" id="booking-email" class="input-box" placeholder="engineer@domain.com" required style="padding: 8px 12px; font-size: 0.85rem;">
+                  <button type="submit" class="btn btn-primary" style="margin-top: 8px; padding: 10px; font-size: 0.85rem; width: 100%;">
+                    Confirm Booking Reservation
+                  </button>
+                </form>
+              </div>
+
+              <div id="booking-empty-state" style="text-align: center; padding: 24px 0; color: hsl(var(--text-muted)); font-size: 0.85rem;">
+                Select a calendar day above to review schedules
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Shop Section -->
+        <section id="page-shop" class="page-section">
+          <h2 class="section-title">Developer Store</h2>
+          <p class="section-subtitle">Acquire tutorial extensions, offline packs, and support subscriptions</p>
+
+          <div class="shop-layout">
+            <div class="products-grid" id="shop-products-container">
+              <!-- Loaded dynamically via app.js -->
+            </div>
+
+            <!-- Cart Sidebar -->
+            <div class="glass-card cart-card">
+              <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border);">Shopping Cart</h3>
+              
+              <div class="cart-items-list" id="cart-list">
+                <div style="text-align: center; color: hsl(var(--text-muted)); font-size: 0.85rem; padding: 24px 0;">Cart is empty</div>
+              </div>
+              
+              <div style="border-top: 1px solid var(--glass-border); padding-top: 16px;">
+                <div class="cart-total-row">
+                  <span>Subtotal</span>
+                  <span id="cart-subtotal">$0.00</span>
+                </div>
+                <button id="checkout-trigger" class="btn btn-primary" onclick="openCheckoutModal()" style="width: 100%; margin-top: 16px; font-size: 0.9rem;" disabled>
+                  Checkout and Pay
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Contact Section -->
+        <section id="page-contact" class="page-section">
+          <h2 class="section-title">Get In Touch</h2>
+          <p class="section-subtitle">Reach out for customized content, billing, or enterprise training plans</p>
+          
+          <div class="contact-layout">
+            <div class="glass-card">
+              <form id="contact-form-pane" onsubmit="submitContact(event)" class="form-group" style="gap: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label for="contact-name">Your Name</label>
+                    <input type="text" id="contact-name" class="input-box" placeholder="Jane Doe" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="contact-email">Email Address</label>
+                    <input type="email" id="contact-email" class="input-box" placeholder="jane@example.com" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="contact-subject">Subject</label>
+                  <input type="text" id="contact-subject" class="input-box" placeholder="Support/Sponsorship request" required>
+                </div>
+                <div class="form-group">
+                  <label for="contact-message">Message</label>
+                  <textarea id="contact-message" class="input-box" style="min-height: 120px;" placeholder="Describe your request in detail..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Send Secure Message</button>
+              </form>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+              <div class="glass-card">
+                <h4 style="font-weight: 700; margin-bottom: 8px; font-family: var(--font-display);">Direct Contact</h4>
+                <p style="font-size: 0.85rem; color: hsl(var(--text-secondary)); margin-bottom: 12px;">For urgent corporate consultations, email directly:</p>
+                <a href="mailto:office@devfluent.com" style="color: hsl(var(--primary-hsl)); font-weight: 600; font-size: 0.9rem; text-decoration: none;">office@devfluent.com</a>
+              </div>
+              <div class="glass-card">
+                <h4 style="font-weight: 700; margin-bottom: 8px; font-family: var(--font-display);">Security & Hosting</h4>
+                <p style="font-size: 0.825rem; color: hsl(var(--text-muted));">All data submitted is encrypted over transport layer SSL (HTTPS) with simulated RSA password cryptography protocols.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. Settings / CMS Section -->
+        <section id="page-settings" class="page-section">
+          <h2 class="section-title">Configuration & Admin</h2>
+          <p class="section-subtitle">Manage user preferences and CMS text content</p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+            <div class="glass-card">
+              <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 20px;">
+                WordPress-Style Layout Editor (CMS)
+              </h3>
+              <p style="font-size: 0.85rem; color: hsl(var(--text-muted)); margin-bottom: 24px;">
+                Edit variables directly here. Click "Update Site" to apply edits across the homepage immediately.
+              </p>
+
+              <form id="cms-editor-form" onsubmit="saveCMSContent(event)" class="form-group" style="gap: 16px;">
+                <div class="form-group">
+                  <label for="cms-input-title">Hero Banner Title</label>
+                  <input type="text" id="cms-input-title" class="input-box" value="Master Code In Depth & Offline">
+                </div>
+                <div class="form-group">
+                  <label for="cms-input-para">Hero Secondary Paragraph</label>
+                  <textarea id="cms-input-para" class="input-box" style="min-height: 80px;">Gain structural engineering concepts using step-by-step visualized tutorials. Sync to your local device to continue studying in remote regions or on flight.</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                  Update Site Content
+                </button>
+              </form>
+            </div>
+
+            <!-- Profile Preferences / Security settings -->
+            <div class="glass-card">
+              <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 20px;">
+                Account Preferences
+              </h3>
+              <p id="settings-login-warning" style="font-size: 0.85rem; color: #f59e0b; margin-bottom: 16px;">
+                ⚠️ You are not logged in. Navigate to the "Profile" tab to authenticate.
+              </p>
+
+              <div id="settings-actions-panel" style="opacity: 0.5; pointer-events: none;">
+                <form id="settings-pref-form" onsubmit="saveUserPreferences(event)" class="form-group" style="gap: 16px;">
+                  <div class="form-group">
+                    <label for="settings-username">Display Full Name</label>
+                    <input type="text" id="settings-username" class="input-box">
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-email">Email Address</label>
+                    <input type="email" id="settings-email" class="input-box" disabled>
+                  </div>
+                  <button type="submit" class="btn btn-secondary">
+                    Save Profile Changes
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. Profile / Credentials (Login/Signup/Reset) Section -->
+        <section id="page-profile" class="page-section">
+          <div id="logged-out-panel" class="auth-panel">
+            <div class="auth-tabs">
+              <div id="auth-tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+              <div id="auth-tab-signup" class="auth-tab" onclick="switchAuthTab('signup')">Create Account</div>
+              <div id="auth-tab-reset" class="auth-tab" onclick="switchAuthTab('reset')">Reset Password</div>
+            </div>
+
+            <!-- Sign In card -->
+            <div id="auth-card-login" class="glass-card auth-form-card">
+              <form onsubmit="handleLoginSubmit(event)" class="form-group" style="gap: 16px;">
+                <div class="form-group">
+                  <label for="login-email">Email Address</label>
+                  <input type="email" id="login-email" class="input-box" placeholder="name@domain.com" required>
+                </div>
+                <div class="form-group">
+                  <label for="login-password">Password</label>
+                  <input type="password" id="login-password" class="input-box" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+              </form>
+            </div>
+
+            <!-- Sign Up card -->
+            <div id="auth-card-signup" class="glass-card auth-form-card" style="display: none;">
+              <form onsubmit="handleSignupSubmit(event)" class="form-group" style="gap: 16px;">
+                <div class="form-group">
+                  <label for="signup-name">Full Name</label>
+                  <input type="text" id="signup-name" class="input-box" placeholder="developer name" required>
+                </div>
+                <div class="form-group">
+                  <label for="signup-email">Email Address</label>
+                  <input type="email" id="signup-email" class="input-box" placeholder="name@domain.com" required>
+                </div>
+                <div class="form-group">
+                  <label for="signup-password">Secure Password</label>
+                  <input type="password" id="signup-password" class="input-box" placeholder="minimum 6 chars" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary">Register Account</button>
+              </form>
+            </div>
+
+            <!-- Reset password card -->
+            <div id="auth-card-reset" class="glass-card auth-form-card" style="display: none;">
+              <h3 style="font-size: 1.1rem; font-family: var(--font-display); font-weight: 700;">Password Cryptography Reset</h3>
+              <p style="font-size: 0.8rem; color: hsl(var(--text-secondary));">Enter user email registry block. A reset verification token will be dispatched.</p>
+              
+              <form onsubmit="handleResetSubmit(event)" class="form-group" style="gap: 16px;">
+                <div class="form-group">
+                  <label for="reset-email">Email Address</label>
+                  <input type="email" id="reset-email" class="input-box" placeholder="name@domain.com" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Dispatched Secured Token</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Logged In / Dashboard panel -->
+          <div id="logged-in-panel" style="display: none;">
+            <div class="hero-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 32px;">
+              <div class="glass-card">
+                <span class="badge">Active Profile Session</span>
+                <h2 id="prof-display-name" class="section-title" style="margin-top: 12px;">User</h2>
+                <p id="prof-display-email" style="color: hsl(var(--text-secondary)); font-size: 0.95rem; margin-bottom: 24px;">email@domain.com</p>
+                <div style="display: flex; gap: 12px;">
+                  <button class="btn btn-secondary" onclick="handleLogout()" style="padding: 8px 16px; font-size: 0.85rem;">Logout Session</button>
+                  <button class="btn btn-primary" onclick="navigateTo('settings')" style="padding: 8px 16px; font-size: 0.85rem;">CMS Panel</button>
+                </div>
+              </div>
+
+              <!-- Offline Sync List -->
+              <div class="glass-card">
+                <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; margin-bottom: 12px;">Simulated Visual Dashboard</h3>
+                <p style="font-size: 0.85rem; color: hsl(var(--text-secondary)); margin-bottom: 16px;">
+                  Local downloaded modules usable offline:
+                </p>
+                <div id="offline-modules-listing" style="display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Dynamically populated downloads list -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Stripe, MTN, Orange Mobile Money Integration Dialog -->
+  <div id="checkout-modal" class="modal-overlay" onclick="closeCheckoutModalOnOverlay(event)">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeCheckoutModal()">✕</button>
+      <h3 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; margin-bottom: 6px;">Secure Gateway checkout</h3>
+      <p style="color: hsl(var(--text-secondary)); font-size: 0.85rem; margin-bottom: 20px;">Choose payment option and dispatch transaction</p>
+      
+      <div class="payment-tab-row">
+        <button id="pay-tab-stripe" class="payment-tab active" onclick="switchPaymentTab('stripe')">
+          💳 Card / Stripe
+        </button>
+        <button id="pay-tab-mtn" class="payment-tab" onclick="switchPaymentTab('mtn')">
+          📱 MTN Money
+        </button>
+        <button id="pay-tab-orange" class="payment-tab" onclick="switchPaymentTab('orange')">
+          🍊 Orange Money
+        </button>
+      </div>
+
+      <!-- Stripe Form -->
+      <div id="pay-form-stripe" class="form-group" style="gap: 16px;">
+        <div class="form-group">
+          <label for="stripe-card-num">Card Number</label>
+          <input type="text" id="stripe-card-num" class="input-box" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="stripe-card-exp">Expiration</label>
+            <input type="text" id="stripe-card-exp" class="input-box" placeholder="MM/YY" value="12/28">
+          </div>
+          <div class="form-group">
+            <label for="stripe-card-cvc">CVC</label>
+            <input type="text" id="stripe-card-cvc" class="input-box" placeholder="123" value="123">
+          </div>
+        </div>
+        <button onclick="processSimulatedPayment('Stripe')" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+          Complete Stripe Payment (<span class="pay-total-val">$0.00</span>)
+        </button>
+      </div>
+
+      <!-- Mobile Money MTN/Orange Form -->
+      <div id="pay-form-momo" class="form-group" style="display: none; gap: 16px;">
+        <span class="badge" id="momo-badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; width: fit-content;"></span>
+        <div class="form-group">
+          <label for="momo-phone">Mobile Phone Number</label>
+          <input type="tel" id="momo-phone" class="input-box" placeholder="+237 6xx xxx xxx" value="677123456">
+        </div>
+        
+        <!-- OTP Simulator section -->
+        <div id="momo-otp-field" class="form-group" style="display: none; animation: fadeIn var(--transition-normal) forwards;">
+          <label for="momo-otp">Enter SIM Verification OTP (Simulated Code: 9982)</label>
+          <input type="text" id="momo-otp" class="input-box" placeholder="Enter 4-digit code">
+        </div>
+
+        <button id="momo-primary-btn" onclick="startMomoVerification()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+          Next: Verify Phone Number
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Helper floating button -->
+  <button class="ai-helper-btn" onclick="toggleAIChat()">
+    <svg style="width: 24px; height: 24px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+  </button>
+
+  <!-- AI Helper Drawer -->
+  <div id="ai-drawer" class="ai-assistant-drawer">
+    <div class="ai-drawer-header">
+      <div class="ai-drawer-title">
+        <svg style="width: 18px; height: 18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
+        <span>AI Code Explanation Assistant</span>
+      </div>
+      <button onclick="toggleAIChat()" style="background: none; border: none; color: hsl(var(--text-muted)); cursor: pointer; font-size: 1.1rem;">✕</button>
+    </div>
+    
+    <div class="ai-chat-body" id="ai-chat-scroller">
+      <div class="ai-message system">
+        Hi there! I am the DevFluent local assistant. Feed me any block of code or ask any questions about programming, and I will explain the execution processes and structure.
+      </div>
+    </div>
+
+    <!-- Quick action prompts -->
+    <div style="display: flex; gap: 6px; padding: 0 12px; overflow-x: auto; white-space: nowrap; margin-bottom: 8px;">
+      <button onclick="aiPrePrompt('Explain scope in Javascript')" style="font-size: 0.72rem; padding: 4px 8px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); background: hsla(var(--text-muted), 0.1); color: inherit; cursor: pointer;">
+        💡 Scope
+      </button>
+      <button onclick="aiPrePrompt('Explain closures with dynamic example')" style="font-size: 0.72rem; padding: 4px 8px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); background: hsla(var(--text-muted), 0.1); color: inherit; cursor: pointer;">
+        💡 Closures
+      </button>
+      <button onclick="aiPrePrompt('Explain MTN/Orange Mobile Money API webhook checks')" style="font-size: 0.72rem; padding: 4px 8px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); background: hsla(var(--text-muted), 0.1); color: inherit; cursor: pointer;">
+        💡 MoMo Webhook
+      </button>
+    </div>
+
+    <form onsubmit="sendAIMessage(event)" class="ai-chat-input-row">
+      <input type="text" id="ai-input-chat" class="input-box" placeholder="Ask AI explain code..." style="padding: 8px 12px; font-size: 0.85rem;" required>
+      <button type="submit" class="btn btn-primary" style="padding: 8px 12px; font-size: 0.85rem;">Send</button>
+    </form>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
