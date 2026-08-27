@@ -1,10 +1,7 @@
-# Checklist for Website Creation
+# Task Checklist
 
-- [x] Initial planning and setup
-- [/] Determine website requirements and concept
-- [ ] Document technical implementation plan
-- [ ] Define styling and theme system
-- [ ] Build the core website structure (HTML)
-- [ ] Implement advanced aesthetics & responsiveness (CSS)
-- [ ] Implement interactive features (JavaScript)
-- [ ] Verification and preview
+- [/] Plan and initialize React framework setup <!-- id: 0 -->
+- [ ] Port the design system and layouts into React components <!-- id: 1 -->
+- [ ] Re-implement all interactions (lessons, sandbox compiler, calendar scheduling, momo payment gateway, AI Assistant) dynamically via React hooks <!-- id: 2 -->
+- [ ] Connect state persistence (local storage sync, offline mode, daily progress streak tracking) <!-- id: 3 -->
+- [ ] Verify the React webapp functionality in the browser <!-- id: 4 -->

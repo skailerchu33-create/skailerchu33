@@ -70,17 +70,29 @@ let state = {
   cms: {
     heroTitle: "Master Code In Depth & Offline",
     heroPara: "Gain structural engineering concepts using step-by-step visualized tutorials. Sync to your local device to continue studying in remote regions or on flight."
-  }
+  },
+  progress: {
+    streak: 0,
+    lastLoginDate: "",
+    loginLogs: []
+  },
+  lessonsData: {},
+  quizData: {}
 };
 
 // --- 2. Initializers & Bootloaders ---
 document.addEventListener('DOMContentLoaded', () => {
   loadOrCreateLocalStore();
+
+  // Initialize Daily progress streak and syllabus data
+  initUserProgress();
+  initLessonsAndQuizzes();
+
   renderAppUI();
-  
+
   // Set initial text from CMS state
   applyCMSContentToUI();
-  
+
   // Handle offline initial status dot
   updateOfflineButtonUI();
 });
@@ -109,6 +121,18 @@ function loadOrCreateLocalStore() {
   } else {
     localStorage.setItem('df_cms', JSON.stringify(state.cms));
   }
+
+  // Load Lessons cache
+  const cachedLessons = localStorage.getItem('df_lessons_data');
+  if (cachedLessons) {
+    state.lessonsData = JSON.parse(cachedLessons);
+  } else {
+    state.lessonsData = JSON.parse(JSON.stringify(LESSON_SUBJECTS));
+    localStorage.setItem('df_lessons_data', JSON.stringify(state.lessonsData));
+  }
+
+  // Load Quiz cache
+  state.quizData = JSON.parse(JSON.stringify(QUIZ_SUBJECTS));
 }
 
 function saveTutorialsState() {
@@ -133,8 +157,8 @@ function renderTutorialsGrid(filterTerm = '') {
   container.innerHTML = '';
 
   const term = filterTerm.toLowerCase().trim();
-  const filtered = state.tutorials.filter(t => 
-    t.title.toLowerCase().includes(term) || 
+  const filtered = state.tutorials.filter(t =>
+    t.title.toLowerCase().includes(term) ||
     t.description.toLowerCase().includes(term) ||
     t.category.toLowerCase().includes(term)
   );
@@ -148,11 +172,11 @@ function renderTutorialsGrid(filterTerm = '') {
     const card = document.createElement('div');
     card.className = 'glass-card tutorial-card';
     card.id = `tut-card-${tut.id}`;
-    
-    const downloadBadge = tut.downloaded 
+
+    const downloadBadge = tut.downloaded
       ? `<span class="download-status-badge">✓ Offline Safe</span>`
       : `<span class="download-status-badge">☁️ Cloud Only</span>`;
-    
+
     card.innerHTML = `
       <div class="thumbnail-wrap">
         ${downloadBadge}
@@ -229,7 +253,7 @@ function renderCalendar() {
     const dayEl = document.createElement('div');
     dayEl.className = 'calendar-day';
     dayEl.innerText = d;
-    
+
     // check if completely booked out
     const bookedForDay = state.bookedSlots[d.toString()] || [];
     if (bookedForDay.length >= 4) {
@@ -250,7 +274,7 @@ function renderCart() {
   const container = document.getElementById('cart-list');
   const checkoutBtn = document.getElementById('checkout-trigger');
   const subtotalEl = document.getElementById('cart-subtotal');
-  
+
   if (!container) return;
   container.innerHTML = '';
 
@@ -283,7 +307,7 @@ function renderCart() {
 
   if (subtotalEl) subtotalEl.innerText = `$${total.toFixed(2)}`;
   if (checkoutBtn) checkoutBtn.disabled = false;
-  
+
   // Set label inside modal checkout
   const payVals = document.querySelectorAll('.pay-total-val');
   payVals.forEach(el => el.innerText = `$${total.toFixed(2)}`);
@@ -396,6 +420,18 @@ function navigateTo(pageId) {
     sidebar.classList.remove('active');
   }
 
+  // Load context on navigate targets immediately
+  if (pageId === 'lessons') {
+    loadLessonSubject(currentLessonLang || 'js');
+  } else if (pageId === 'quiz') {
+    loadQuizSubject(currentQuizSubject || 'js');
+  } else if (pageId === 'terminal') {
+    setTimeout(() => {
+      const termKbd = document.getElementById('terminal-shell-keyboard');
+      if (termKbd) termKbd.focus();
+    }, 70);
+  }
+
   window.scrollTo(0, 0);
 }
 
@@ -410,7 +446,7 @@ function toggleTheme() {
   const isLight = document.body.classList.toggle('light-mode');
   const btnText = document.getElementById('theme-lbl');
   const icon = document.getElementById('theme-icon');
-  
+
   if (isLight) {
     if (btnText) btnText.innerText = "Light";
     if (icon) {
@@ -429,10 +465,10 @@ function toggleTheme() {
 
 function toggleOfflineMode() {
   state.offlineMode = !state.offlineMode;
-  
+
   const body = document.body;
   const statusLbl = document.getElementById('offline-lbl');
-  
+
   if (state.offlineMode) {
     body.classList.add('offline-mode');
     if (statusLbl) statusLbl.innerText = "Offline Mode";
@@ -442,9 +478,9 @@ function toggleOfflineMode() {
     if (statusLbl) statusLbl.innerText = "Online Mode";
     showToast("Reconnected securely. Networks operational.", "#10b981");
   }
-  
+
   updateOfflineButtonUI();
-  
+
   // Refresh content grid indicators
   renderTutorialsGrid();
 
@@ -529,7 +565,7 @@ function closeSandbox() {
 function updateSyncButtonUI(isDownloaded) {
   const btn = document.getElementById('sim-download-tutorial');
   if (!btn) return;
-  
+
   if (isDownloaded) {
     btn.innerHTML = `✓ Synced Offline`;
     btn.style.background = 'hsla(160, 80%, 30%, 0.15)';
@@ -546,7 +582,7 @@ function updateSyncButtonUI(isDownloaded) {
 function checkSandboxOfflineCompatibility() {
   const tut = state.tutorials.find(t => t.id === state.activeSandboxTutorialId);
   if (!tut) return;
-  
+
   if (state.offlineMode && !tut.downloaded) {
     showToast("Offline active: Room closed due to lack of local cache sync.", "#ef4444");
     closeSandbox();
@@ -591,20 +627,20 @@ function runSandboxCode() {
 
   let consoleLogs = [];
   const originalLog = console.log;
-  console.log = function(...args) {
+  console.log = function (...args) {
     consoleLogs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '));
   };
 
   try {
     // Basic execution evaluator
     const result = new Function(codeContent)();
-    
+
     // Retrieve sandbox output
     let outputString = consoleLogs.map(log => `[log] ${log}`).join('\n');
     if (result !== undefined) {
       outputString += `\n[return] => ${result}`;
     }
-    
+
     consoleEl.innerText = outputString || "> Code ran successfully with empty output.";
     consoleEl.style.color = "#10b981";
   } catch (err) {
@@ -618,7 +654,7 @@ function runSandboxCode() {
 // Simulated Video Utilities
 function togglePlayState() {
   const btn = document.getElementById('play-pause-btn-lbl');
-  
+
   if (isVideoPlaying) {
     isVideoPlaying = false;
     if (btn) btn.innerText = "▶ Play";
@@ -671,14 +707,14 @@ function updateVideoProgressUI() {
   if (prog) {
     prog.style.width = `${simulatedVideoProgressPct}%`;
   }
-  
+
   if (timer) {
     const totalSecs = 225; // 3 min 45s
     const currentTotalSecs = Math.floor((simulatedVideoProgressPct / 100) * totalSecs);
-    
+
     const minutesVal = Math.floor(currentTotalSecs / 60).toString().padStart(2, '0');
     const secondsVal = (currentTotalSecs % 60).toString().padStart(2, '0');
-    
+
     timer.innerText = `${minutesVal}:${secondsVal} / 03:45`;
   }
 }
@@ -708,7 +744,7 @@ function aiPrePrompt(text) {
 
 function sendAIMessage(event) {
   if (event) event.preventDefault();
-  
+
   const input = document.getElementById('ai-input-chat');
   if (!input) return;
 
@@ -740,19 +776,51 @@ function appendAIMessage(content, type) {
 }
 
 function generateAIResponse(query) {
-  const q = query.toLowerCase();
-  
+  const q = query.toLowerCase().trim();
+  const isFrench = q.includes('bonjour') || q.includes('expliqu') || q.includes('comment') || q.includes('aide') || q.includes('variables') || q.includes('boucle') || q.includes('fonction') || q.includes('salut') || q.includes('quoi');
+
+  let response = "";
+
+  if (isFrench) {
+    if (q.includes('scope') || q.includes('portee')) {
+      response = `La portée (Scope) en JavaScript détermine l'accessibilité des variables:\n1. Portée lexicale: Les fonctions imbriquées ont accès aux variables de leur fonction parent.\n2. Scope global: Variables définies hors de toute fonction.\n3. Scope de bloc: Déclarées avec 'let' et 'const' limitées aux accolades {}.`;
+    } else if (q.includes('closure') || q.includes('fermeture')) {
+      response = `Une fermeture (Closure) se produit lorsqu'une fonction interne conserve les références des variables de son scope parent, même après que la fonction parent a fini de s'exécuter. Exemple:\n\nfunction genererCompteur() {\n  let total = 0;\n  return () => ++total;\n}`;
+    } else if (q.includes('react') || q.includes('hook') || q.includes('etat')) {
+      response = `Dans React, les Hooks (comme useState et useEffect) vous permettent de synchroniser l'état et d'exécuter des cycles de rendu sans écrire de classes. useEffect écoute les dépendances pour re-déclencher des actions.`;
+    } else if (q.includes('c++') || q.includes('pointeur') || q.includes('adresse')) {
+      response = `En C++, les pointeurs (*) stockent les adresses de mémoire hexadécimales de variables. Vous les référencez en utilisant l'opérateur de référence (&). Pensez à 'delete' pour libérer la mémoire allouée dynamiquement sur le tas.`;
+    } else if (q.includes('css') || q.includes('flexbox') || q.includes('aligner')) {
+      response = `Pour aligner avec CSS Flexbox: utilisez 'justify-content: center' pour l'axe principal et 'align-items: center' pour l'axe secondaire. Pour l'effet Glassmorphism, appliquez 'backdrop-filter: blur(10px)' et des bordures translucides.`;
+    } else {
+      response = `Analyse de votre question: "${query}"...\nJe comprends le français! Cependant, pour cette requête spécifique, je vous suggère de regarder de plus près la documentation DevFluent.`;
+    }
+
+    const googleQuery = encodeURIComponent(query);
+    response += `\n\n🔍 Besoin d'en savoir plus ? Cliquez ici pour continuer vos recherches: [Rechercher "${query}" sur Google](https://www.google.com/search?q=${googleQuery})`;
+    return response;
+  }
+
+  // English details
   if (q.includes('scope')) {
-    return `JavaScript scoping defines the accessibility of variables. Highlights:\n1. Lexical Scope: Functions nested internally hold access properties to outer variables.\n2. Global Context: Variables defined outside functions map to global objects.\n3. Block Scope: const and let restrict mapping scope block rules contextually.`;
+    response = `JavaScript scoping defines variable accessibility. Core concepts:\n1. Lexical Scope: Nested functions retain access to outer parental scope variables.\n2. Global Context: Outer variables map to the global thread runtime.\n3. Block Scope: 'let' and 'const' variables bind locally to enclosing curly braces {} blocks.`;
+  } else if (q.includes('closure')) {
+    response = `A closure references and remembers its outer lexical environment variables even after execution of the outer frame completes. Pattern:\n\nfunction outer() {\n  let cache = 0;\n  return () => ++cache;\n}`;
+  } else if (q.includes('react') || q.includes('hook') || q.includes('state')) {
+    response = `React updates component trees when hooks state or props mutate. 'useState' holds local data variables, and 'useEffect' coordinates side-effects asynchronously during render loops.`;
+  } else if (q.includes('c++') || q.includes('pointer') || q.includes('reference') || q.includes('alloc')) {
+    response = `C++ pointers (*) store structural address integers of variables. Address lookup uses address-of operators (&). Heap variables require manual 'new' allocating and 'delete' releasing.`;
+  } else if (q.includes('css') || q.includes('flex') || q.includes('grid') || q.includes('glass')) {
+    response = `Flexbox aligns rows or columns easily. Glassmorphism combines backing HSL transparencies 'rgba(x,y,z,a)' alongside visual blur rules 'backdrop-filter: blur(12px)'.`;
+  } else if (q.includes('momo') || q.includes('mtn') || q.includes('orange') || q.includes('webhook')) {
+    response = `African Mobile Money (MoMo Webhook APIs) relies on callbacks for verification. Gateways invoke callback URLs notifying transaction states async because users approve USSD prompts from their mobile SIM card.`;
+  } else {
+    response = `Query parameters matching check: "${query}"...\nNo exact pre-prompt templates matching this query. Review DevFluent code structures.`;
   }
-  if (q.includes('closure')) {
-    return `A closure is formed whenever a inner nesting function keeps holds/references to its parent scope even after returning. Common pattern:\n\nfunction init() {\n  let cache = 0;\n  return () => ++cache;\n}`;
-  }
-  if (q.includes('momo') || q.includes('mtn') || q.includes('orange') || q.includes('webhook')) {
-    return `African mobile money (MTN / Orange Money) relies heavily on callback webhooks, since users complete verification via USSD popup prompts directly on their SIM card:\n1. Submit POST request initiating billing to gateway API.\n2. Gateway requests user credential inputs.\n3. Callback URL triggers transaction notifications synchronously.`;
-  }
-  
-  return `Analyzing query: "${query}"...\nNo direct template match. I suggest investigating variable bindings, recursion triggers, and API callback validation rules within DevFluent docs. Let me know if you would like me to output a code solution!`;
+
+  const googleQuery = encodeURIComponent(query);
+  response += `\n\n🔍 Need deep-dives? Ask on Google Search in one click: [Search "${query}" on Google](https://www.google.com/search?q=${googleQuery})`;
+  return response;
 }
 
 // --- 7. Booking & Consulting Calendar ---
@@ -771,7 +839,7 @@ function selectCalendarDay(dayNumber) {
 
   state.selectedDate = dayNumber;
   state.selectedTimeSlot = null; // reset
-  
+
   // Highlight calendar container selection
   renderCalendar();
 
@@ -786,7 +854,7 @@ function selectCalendarDay(dayNumber) {
   slotsCol.forEach(el => {
     el.classList.remove('selected');
     const slotTime = el.innerText;
-    
+
     // Check if slot booked already
     if (bookedForDay.includes(slotTime)) {
       el.style.opacity = '0.3';
@@ -803,7 +871,7 @@ function selectCalendarDay(dayNumber) {
 function selectTimeSlot(element, slotTime) {
   const slotsCol = document.querySelectorAll('.time-slot');
   slotsCol.forEach(el => el.classList.remove('selected'));
-  
+
   element.classList.add('selected');
   state.selectedTimeSlot = slotTime;
 }
@@ -831,7 +899,7 @@ function submitBooking(event) {
 
   // Feedback to user
   showToast(`Mentorship scheduled on July ${dayKey} at ${state.selectedTimeSlot}. Invoice dispatched to ${emailVal}`);
-  
+
   // Reset Calendar Selection
   state.selectedDate = null;
   state.selectedTimeSlot = null;
@@ -868,7 +936,7 @@ function openCheckoutModal() {
     showToast("Checkout requires network connectivity. Connect to verify.", "#ef4444");
     return;
   }
-  
+
   const modal = document.getElementById('checkout-modal');
   if (modal) {
     modal.classList.add('active');
@@ -879,7 +947,7 @@ function openCheckoutModal() {
 function closeCheckoutModal() {
   const modal = document.getElementById('checkout-modal');
   if (modal) modal.classList.remove('active');
-  
+
   // Close OTP fields states if any
   document.getElementById('momo-otp-field').style.display = 'none';
   const momoBtn = document.getElementById('momo-primary-btn');
@@ -977,7 +1045,7 @@ function processSimulatedPayment(methodName) {
 
   setTimeout(() => {
     showToast("💳 Transaction authorized successfully. Welcome to Premium!");
-    
+
     // check if cart has premium upgrade to toggle active states details
     const hasPremiumUpgrade = state.cart.some(i => i.product.id === 'pro_upgrade');
     if (hasPremiumUpgrade && state.currentUser) {
@@ -1007,7 +1075,7 @@ function addComment(event) {
   // Add layout comments elements dynamically
   const authorName = state.currentUser ? state.currentUser.name : "Anonymous Dev";
   const now = new Date();
-  const fmtDate = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  const fmtDate = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
   activeTut.comments.unshift({
     author: authorName,
@@ -1017,7 +1085,7 @@ function addComment(event) {
 
   saveTutorialsState();
   renderActiveComments();
-  
+
   // reset input
   textEl.value = '';
   showToast("Comment published into guild thread!");
@@ -1029,7 +1097,7 @@ function applyCMSContentToUI() {
   const p = document.getElementById('cms-hero-para');
   if (h1) h1.innerText = state.cms.heroTitle;
   if (p) p.innerText = state.cms.heroPara;
-  
+
   // Also fill settings input boxes dynamically
   const inputTitle = document.getElementById('cms-input-title');
   const inputPara = document.getElementById('cms-input-para');
@@ -1105,11 +1173,11 @@ function handleLoginSubmit(event) {
 
   localStorage.setItem('df_logged_user', JSON.stringify(state.currentUser));
   updateUserSessionUI();
-  
+
   // Clear forms
   document.getElementById('login-email').value = '';
   document.getElementById('login-password').value = '';
-  
+
   showToast("Logged in securely.");
 }
 
@@ -1163,7 +1231,7 @@ function saveUserPreferences(event) {
   state.currentUser.name = display;
   localStorage.setItem('df_logged_user', JSON.stringify(state.currentUser));
   updateUserSessionUI();
-  
+
   showToast("Preferences written immediately.");
 }
 
@@ -1221,3 +1289,586 @@ function showToast(message, colorCode = '#10b981') {
 function escapeHTML(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
+
+// -------------------------------------------------------------
+// --- 13. Upgraded Feature Modules: Progress, Lessons, Quizzes & Shell ---
+
+// --- A. Daily Streak Progress Checker ---
+function initUserProgress() {
+  let progress = {
+    streak: 1,
+    lastLoginDate: "",
+    loginLogs: []
+  };
+
+  const cachedProgress = localStorage.getItem('df_progress_logs');
+  if (cachedProgress) {
+    progress = JSON.parse(cachedProgress);
+  }
+
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+
+  const pad = (n) => n.toString().padStart(2, '0');
+  const entryTimeStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+  let lastLogTime = progress.loginLogs[0];
+  let shouldLog = true;
+  if (lastLogTime) {
+    const diff = now - new Date(lastLogTime.substring(0, 10) + 'T' + lastLogTime.substring(11, 19));
+    if (diff < 5000) shouldLog = false; // debounce 5s
+  }
+
+  if (shouldLog) {
+    progress.loginLogs.unshift(entryTimeStr);
+    if (progress.loginLogs.length > 8) {
+      progress.loginLogs = progress.loginLogs.slice(0, 8);
+    }
+  }
+
+  // Calculate streak values
+  if (progress.lastLoginDate) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (progress.lastLoginDate === yesterdayStr) {
+      progress.streak++;
+      showToast(`🔥 Daily study streak increased to ${progress.streak} days!`);
+    } else if (progress.lastLoginDate !== todayStr) {
+      progress.streak = 1;
+    }
+  } else {
+    progress.streak = 1;
+  }
+
+  progress.lastLoginDate = todayStr;
+  localStorage.setItem('df_progress_logs', JSON.stringify(progress));
+
+  state.progress = progress;
+  renderProgressUI();
+}
+
+function renderProgressUI() {
+  const headerStreak = document.getElementById('header-streak-count');
+  const profileStreak = document.getElementById('profile-streak-count');
+  const logsList = document.getElementById('profile-streak-logs-list');
+
+  if (headerStreak) headerStreak.innerText = state.progress.streak;
+  if (profileStreak) profileStreak.innerText = state.progress.streak;
+
+  if (logsList) {
+    logsList.innerHTML = '';
+    if (state.progress.loginLogs.length === 0) {
+      logsList.innerHTML = `<span style="color: hsl(var(--text-muted)); font-style: italic;">No access logs entries.</span>`;
+    } else {
+      state.progress.loginLogs.forEach((logStr, index) => {
+        const row = document.createElement('div');
+        row.className = 'streak-log-row';
+        row.innerHTML = `
+          <span>Session Log #${state.progress.loginLogs.length - index}</span>
+          <span style="color: hsl(var(--primary-hsl)); font-weight: 600;">${logStr}</span>
+        `;
+        logsList.appendChild(row);
+      });
+    }
+  }
+}
+
+// --- B. Syllabus Lessons Viewer ---
+let currentLessonLang = 'js';
+
+function initLessonsAndQuizzes() {
+  // Setup logic placeholders if necessary
+}
+
+function loadLessonSubject(lang) {
+  currentLessonLang = lang;
+
+  // Highlight sidebar item button
+  const btns = document.querySelectorAll('.lessons-cat-btn');
+  btns.forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('data-lang') === lang) {
+      btn.classList.add('active');
+    }
+  });
+
+  const lesson = state.lessonsData[lang];
+  if (!lesson) return;
+
+  const viewer = document.getElementById('active-lesson-viewer');
+  if (!viewer) return;
+
+  let starsHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const starClass = i <= lesson.rating ? 'active' : '';
+    starsHTML += `<button class="star-btn ${starClass}" onclick="rateActiveLesson(${i})">★</button>`;
+  }
+
+  viewer.innerHTML = `
+    <span class="badge" style="margin-bottom: 8px;">${lesson.category}</span>
+    <h2 style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; margin: 4px 0 6px;">${lesson.title}</h2>
+    <p style="color: hsl(var(--text-secondary)); font-size: 0.88rem; margin-bottom: 20px;">${lesson.subtitle}</p>
+    
+    <div style="line-height: 1.6; font-size: 0.95rem; color: hsl(var(--text-primary)); margin-bottom: 24px;">
+      ${lesson.content}
+    </div>
+
+    <h4 style="font-size: 0.85rem; font-family: var(--font-display); font-weight: 700; text-transform: uppercase;">Syllabus Code Sample:</h4>
+    <div class="lesson-code-card">${escapeHTML(lesson.code)}</div>
+
+    <div style="display: flex; gap: 12px; margin-bottom: 32px;">
+      <button class="btn btn-primary" onclick="sendLessonToSandbox()" style="padding: 10px 18px; font-size: 0.825rem;">
+        🚀 Send Code to Workspace Sandbox
+      </button>
+    </div>
+
+    <div class="rating-stars-container">
+      <span class="rating-label">Evaluate Lesson Clarity:</span>
+      <div class="rating-stars-wrap">
+        ${starsHTML}
+      </div>
+      <span style="font-size: 0.8rem; color: hsl(var(--text-muted)); margin-left: 8px;">
+        (Rating: ${lesson.rating}/5 stars, total: ${lesson.reviewsCount} reviews)
+      </span>
+    </div>
+  `;
+}
+
+function rateActiveLesson(score) {
+  const lesson = state.lessonsData[currentLessonLang];
+  if (!lesson) return;
+
+  lesson.rating = score;
+  lesson.reviewsCount++;
+
+  localStorage.setItem('df_lessons_data', JSON.stringify(state.lessonsData));
+  loadLessonSubject(currentLessonLang);
+
+  showToast(`★ Rated syllabus ${score}/5 stars!`);
+}
+
+function sendLessonToSandbox() {
+  const lesson = state.lessonsData[currentLessonLang];
+  if (!lesson) return;
+
+  const editor = document.getElementById('sandbox-editor-code');
+  if (editor) {
+    editor.value = lesson.code;
+  }
+
+  navigateTo('home');
+
+  state.activeSandboxTutorialId = 1;
+  const room = document.getElementById('sandbox-section');
+  if (room) {
+    room.style.display = 'block';
+    document.getElementById('sandbox-title').innerText = `${lesson.title} Sandbox`;
+    document.getElementById('video-sim-title').innerText = `Video: Visual ${lesson.title}`;
+    document.getElementById('sandbox-console-out').innerText = `> Code imported successfully.\nReady to execute compilation tests.`;
+
+    simulatedVideoProgressPct = 0;
+    updateVideoProgressUI();
+
+    setTimeout(() => {
+      room.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }
+}
+
+// --- C. Quiz Evaluator Components ---
+let currentQuizSubject = 'js';
+let selectedAnswers = {};
+let quizSubmitted = false;
+
+function loadQuizSubject(sub) {
+  currentQuizSubject = sub;
+  selectedAnswers = {};
+  quizSubmitted = false;
+
+  const subjects = ['js', 'css', 'html', 'react', 'cpp'];
+  subjects.forEach(s => {
+    const btn = document.getElementById(`quiz-btn-${s}`);
+    if (btn) btn.classList.remove('active');
+  });
+  const activeBtn = document.getElementById(`quiz-btn-${sub}`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  renderQuizUI();
+}
+
+function renderQuizUI() {
+  const container = document.getElementById('active-quiz-card');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const questions = state.quizData[currentQuizSubject];
+  if (!questions) return;
+
+  let questionsHTML = '';
+  questions.forEach((q, qIndex) => {
+    let optionsHTML = '';
+    q.options.forEach((opt, optIndex) => {
+      let optClass = 'quiz-opt-card';
+      if (selectedAnswers[qIndex] === optIndex) {
+        optClass += ' selected';
+      }
+
+      if (quizSubmitted) {
+        if (optIndex === q.answer) {
+          optClass += ' correct-ans';
+        } else if (selectedAnswers[qIndex] === optIndex) {
+          optClass += ' incorrect-ans';
+        }
+      }
+
+      const letter = String.fromCharCode(65 + optIndex);
+      optionsHTML += `
+        <div class="${optClass}" onclick="selectQuizOption(${qIndex}, ${optIndex})">
+          <div class="quiz-opt-label">${letter}</div>
+          <div style="font-size: 0.88rem;">${opt}</div>
+        </div>
+      `;
+    });
+
+    questionsHTML += `
+      <div class="quiz-question-wrap" style="margin-bottom: 24px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px;">
+        <span style="font-size: 0.77rem; color: hsl(var(--primary-hsl)); font-weight: 700;">TEST QUESTION #${qIndex + 1}:</span>
+        <h4 style="font-size: 1.05rem; margin-top: 4px; font-family: var(--font-display); font-weight: 750;">${q.q}</h4>
+        <div class="quiz-options-wrapper">
+          ${optionsHTML}
+        </div>
+      </div>
+    `;
+  });
+
+  let footerHTML = '';
+  if (!quizSubmitted) {
+    footerHTML = `
+      <div style="display: flex; justify-content: flex-end;">
+        <button class="btn btn-primary" onclick="submitActiveQuiz()" style="padding: 10px 24px; font-size: 0.85rem;">
+          Submit Quiz Answers
+        </button>
+      </div>
+    `;
+  } else {
+    let correct = 0;
+    questions.forEach((q, qIndex) => {
+      if (selectedAnswers[qIndex] === q.answer) correct++;
+    });
+    const pct = Math.round((correct / questions.length) * 100);
+    const passed = pct >= 70;
+    const badgeColor = passed ? '#10b981' : '#ef4444';
+    const badgeBg = passed ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+    const statusText = passed ? 'Passed Evaluation' : 'Revision Suggested';
+
+    footerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 16px; gap: 12px;">
+        <span class="badge" style="background: ${badgeBg}; color: ${badgeColor}; font-size: 0.85rem; padding: 6px 12px;">${statusText}</span>
+        <div style="text-align: center;">
+          <h3 style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800;">Grade Result: ${pct}%</h3>
+          <p style="color: hsl(var(--text-secondary)); font-size: 0.85rem;">Scored ${correct} correct answers out of ${questions.length}.</p>
+        </div>
+        <button class="btn btn-secondary" onclick="loadQuizSubject('${currentQuizSubject}')" style="padding: 8px 18px; font-size: 0.8rem;">
+          Retry evaluation
+        </button>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
+      <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: hsl(var(--primary-hsl));">
+        Subject quiz: ${currentQuizSubject.toUpperCase()} Topic
+      </h3>
+      <span class="badge" style="margin-bottom: 0;">${questions.length} questions</span>
+    </div>
+    ${questionsHTML}
+    ${footerHTML}
+  `;
+}
+
+function selectQuizOption(qIdx, optIdx) {
+  if (quizSubmitted) return;
+  selectedAnswers[qIdx] = optIdx;
+  renderQuizUI();
+}
+
+function submitActiveQuiz() {
+  const questions = state.quizData[currentQuizSubject];
+  for (let i = 0; i < questions.length; i++) {
+    if (selectedAnswers[i] === undefined) {
+      showToast("Please answer all questions before submitting.", "#ef4444");
+      return;
+    }
+  }
+  quizSubmitted = true;
+  renderQuizUI();
+  showToast("Quiz answers processing evaluated.");
+}
+
+// --- D. Unix Shell Cmd Web Terminal simulator ---
+function handleTerminalCommand(event) {
+  if (event.key !== 'Enter') return;
+
+  const keyboard = document.getElementById('terminal-shell-keyboard');
+  if (!keyboard) return;
+
+  const rawCmd = keyboard.value;
+  const cmd = rawCmd.trim();
+  keyboard.value = '';
+
+  if (!cmd) return;
+
+  appendTerminalLine(`devfluent@shell:~$ ${cmd}`, 'cmd-echo');
+  executeTerminalCommand(cmd);
+}
+
+function appendTerminalLine(text, className = '') {
+  const logsDiv = document.getElementById('terminal-shell-logs');
+  if (!logsDiv) return;
+
+  const line = document.createElement('div');
+  line.className = `term-line ${className}`;
+  line.innerText = text;
+  logsDiv.appendChild(line);
+
+  logsDiv.scrollTop = logsDiv.scrollHeight;
+}
+
+function executeTerminalCommand(cmdStr) {
+  const parts = cmdStr.split(' ');
+  const main = parts[0].toLowerCase();
+  const arg = parts.slice(1).join(' ');
+
+  switch (main) {
+    case 'help':
+      appendTerminalLine(
+        `Supported Shell instructions commands:\n` +
+        `  help                  - Show this support instructions dialogue.\n` +
+        `  clear                 - Clear output history lines buffer.\n` +
+        `  ls                    - List active virtual assets elements.\n` +
+        `  cat <filename>        - Display text logs buffers of a file.\n` +
+        `  run                   - Compiles and runs JavaScript from the active workspace sandbox.\n` +
+        `  streak                - Check current study streak logging data counts.\n` +
+        `  theme <light/dark>    - Changes core workspace theme color parameters.\n` +
+        `  system                - Display CPU, memory and configurations.`,
+        'sys-success'
+      );
+      break;
+
+    case 'clear':
+      const logs = document.getElementById('terminal-shell-logs');
+      if (logs) logs.innerHTML = '';
+      break;
+
+    case 'ls':
+      appendTerminalLine(
+        `Workspace elements files:\n` +
+        `  - index.html\n` +
+        `  - index.css\n` +
+        `  - app.js\n` +
+        `  - data/lessons.db\n` +
+        `  - agents/assistant-intel.bin`,
+        'sys-success'
+      );
+      break;
+
+    case 'cat':
+      if (!arg) {
+        appendTerminalLine(`error: specify target filename (e.g. cat app.js)`, 'sys-fail');
+        break;
+      }
+      if (arg === 'app.js' || arg === 'index.css' || arg === 'index.html') {
+        appendTerminalLine(`[Simulated Buffer read stream of ${arg}]:`, 'sys-success');
+        appendTerminalLine(`/* Content of ${arg} is loaded successfully */\n// System online.`, '');
+      } else {
+        appendTerminalLine(`cat: error opening ${arg}: file path not found.`, 'sys-fail');
+      }
+      break;
+
+    case 'run':
+      const editorText = document.getElementById('sandbox-editor-code').value;
+      appendTerminalLine(`Executing index thread compilation in sandbox environment...`, '');
+
+      let consoleOutputs = [];
+      const nativeLog = console.log;
+      console.log = function (...params) {
+        consoleOutputs.push(params.map(p => typeof p === 'object' ? JSON.stringify(p) : p).join(' '));
+      };
+
+      try {
+        const res = new Function(editorText)();
+        let logsString = consoleOutputs.map(o => `[term runtime log] ${o}`).join('\n');
+        if (res !== undefined) {
+          logsString += `\n[term return registry] => ${res}`;
+        }
+        appendTerminalLine(logsString || `Execution completed successfully (empty output).`, 'sys-success');
+      } catch (err) {
+        appendTerminalLine(`[sandbox execution error]: ${err.message}`, 'sys-fail');
+      } finally {
+        console.log = nativeLog;
+      }
+      break;
+
+    case 'streak':
+      if (state.progress) {
+        appendTerminalLine(
+          `Study progress dataset stats:\n` +
+          `  Daily Streak: ${state.progress.streak} days\n` +
+          `  Registry record: ${state.progress.lastLoginDate}\n` +
+          `  Logs cached count: ${state.progress.loginLogs.length} entries\n` +
+          `  Latest visit: ${state.progress.loginLogs[0] || 'N/A'}`,
+          'sys-success'
+        );
+      } else {
+        appendTerminalLine(`Progress offline. Relog on Profile tab.`, 'sys-fail');
+      }
+      break;
+
+    case 'theme':
+      if (arg === 'light' || arg === 'dark') {
+        const isCurrentlyLight = document.body.classList.contains('light-mode');
+        if ((arg === 'light' && !isCurrentlyLight) || (arg === 'dark' && isCurrentlyLight)) {
+          toggleTheme();
+          appendTerminalLine(`Switched theme color configurations to ${arg}.`, 'sys-success');
+        } else {
+          appendTerminalLine(`Theme is already set to ${arg}.`, '');
+        }
+      } else {
+        appendTerminalLine(`usage: theme [light/dark]`, 'sys-fail');
+      }
+      break;
+
+    case 'system':
+      appendTerminalLine(
+        `Compiler environment: NodeJS Sandbox Browser VM\n` +
+        `Memory usage: 78.4MB / 1024.0MB\n` +
+        `Offline simulated status: ${state.offlineMode ? 'ACTIVE' : 'CONNECTED'}\n` +
+        `Latent response: 8ms`,
+        'sys-success'
+      );
+      break;
+
+    default:
+      appendTerminalLine(`bash: command mapping not found: ${main}. Type 'help' to review shell options.`, 'sys-fail');
+  }
+}
+
+// Data Templates definitions
+const LESSON_SUBJECTS = {
+  js: {
+    title: "JavaScript Lexicals & Scope",
+    subtitle: "Understanding JavaScript engine behaviors",
+    category: "JS Core",
+    content: "JavaScript engine executes code in a two-pass mechanism: Compilation (lookups) and Execution. Variable bindings are stored inside Execution Context blocks. Functions keep outer scope references by creating closures. Be mindful of garbage collection retention when holding outer references.",
+    code: `// Lexical Closures Example\nfunction buildMultiplier(factor) {\n  return function(number) {\n    return number * factor;\n  };\n}\nconst double = buildMultiplier(2);\nconsole.log(double(5)); // returns 10`,
+    rating: 0,
+    reviewsCount: 3
+  },
+  css: {
+    title: "CSS Flexbox & Layout Paradigms",
+    subtitle: "Creating beautiful glassmorphism structures",
+    category: "Styling Modules",
+    content: "Flexbox aligns content along a single flow (axis). Use 'align-items: center' to position components along the cross axis, and 'justify-content' along the main axis. Glassmorphism combines thin transparent borders, backdrop filters (blur), and variable radial HSL gradients to render state-of-the-art interactive containers.",
+    code: `.glass-container {\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  backdrop-filter: blur(12px);\n  border-radius: var(--radius-md);\n  padding: 24px;\n}`,
+    rating: 0,
+    reviewsCount: 4
+  },
+  html: {
+    title: "HTML5 Semantic Design & SEO Hooks",
+    subtitle: "Structure elements for modern accessibility",
+    category: "Semantic Web",
+    content: "Avoid nesting generic divs recursively. Use semantic tags like 'aside' for sidebars, 'header' for top sections, 'main' for main contexts, and 'section' to separate pages. Provide unique ids for active elements to allow programmatic rendering and browser compliance verification.",
+    code: `<!-- Semantic HTML Outline -->\n<aside class="sidebar">\n  <nav>\n    <ul class="nav-links">\n      <li><a href="#">Dashboard</a></li>\n    </ul>\n  </nav>\n</aside>`,
+    rating: 0,
+    reviewsCount: 2
+  },
+  react: {
+    title: "React.js State Sync & Render Cycles",
+    subtitle: "Virtual DOM diffing updates",
+    category: "Frontend Frameworks",
+    content: "React triggers render updates whenever state changes occur. The Virtual DOM structures compare node components changes, patching browser elements without rewriting the absolute tree. Synchronize updates using useEffect hooks to fetch and cache dynamic structures in offline local stores.",
+    code: `// Simple State Sync Hook\nimport React, { useState, useEffect } from 'react';\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    console.log("Count synced:", count);\n  }, [count]);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}`,
+    rating: 0,
+    reviewsCount: 5
+  },
+  cpp: {
+    title: "C++ Memory Addressing & Pointer Blocks",
+    subtitle: "Understand low-level compilation structures",
+    category: "System Programming",
+    content: "C++ manages memory manually. Variables represent block memory addresses, which can be inspected directly using reference operators (&&). Pointers (*) store the memory address of another variable. Allocating dynamic memory (using 'new') registers addresses directly on the heap and requires manual deletion to avoid memory leakage.",
+    code: `// C++ Pointer Addresses Demo\n#include <iostream>\nint main() {\n  int age = 21;\n  int* ptr = &age;\n  std::cout << "Value: " << age << "\\n";\n  std::cout << "Address: " << ptr << "\\n";\n  std::cout << "De-referenced: " << *ptr << "\\n";\n  return 0;\n}`,
+    rating: 0,
+    reviewsCount: 6
+  }
+};
+
+const QUIZ_SUBJECTS = {
+  js: [
+    {
+      q: "Which keyword defines block-scoped variables in JavaScript?",
+      options: ["var", "let", "global", "scope"],
+      answer: 1
+    },
+    {
+      q: "What mechanism is formed when a nested function references variables from its outer lexical scope?",
+      options: ["Recursion", "Prototype", "Closure", "Hoisting"],
+      answer: 2
+    },
+    {
+      q: "What queue is resolved first in the event loop pipeline?",
+      options: ["Macrotask queue", "Microtask queue", "Rendering tasks", "SetTimeout callbacks"],
+      answer: 1
+    }
+  ],
+  css: [
+    {
+      q: "Which property is utilized to blur the backdrop of an element in Glassmorphic designs?",
+      options: ["filter: blur()", "backdrop-filter: blur()", "glass-backdrop: blur()", "opacity-blur: true"],
+      answer: 1
+    },
+    {
+      q: "What CSS Flexbox declaration centers child items along the cross-axis?",
+      options: ["justify-content: center", "align-content: center", "align-items: center", "flex-direction: center"],
+      answer: 2
+    }
+  ],
+  html: [
+    {
+      q: "Which semantic HTML5 tag represents sidebar utility links or secondary tools?",
+      options: ["<section>", "<article>", "<aside>", "<div>"],
+      answer: 2
+    },
+    {
+      q: "How many H1 tags are recommended per page according to SEO standard guidelines?",
+      options: ["Exactly one", "Up to five", "Unlimited", "Zero"],
+      answer: 0
+    }
+  ],
+  react: [
+    {
+      q: "What hook triggers reactive side-effects when dependency values update?",
+      options: ["useState", "useMemo", "useEffect", "useCallback"],
+      answer: 2
+    },
+    {
+      q: "React component UI updates are triggered by changes in what property?",
+      options: ["Variables", "State and Props", "External files", "Virtual DOM directly"],
+      answer: 1
+    }
+  ],
+  cpp: [
+    {
+      q: "What operator retrieves the memory address of a C++ variable?",
+      options: ["*", "&", "#", "->"],
+      answer: 1
+    },
+    {
+      q: "Which C++ command dynamically requests block allocation on the heap?",
+      options: ["malloc", "new", "pointer", "delete"],
+      answer: 1
+    }
+  ]
+};

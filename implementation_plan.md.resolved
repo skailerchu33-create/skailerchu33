@@ -1,49 +1,49 @@
-# Implementation Plan - Modern Web Application
+# Implementation Plan - Migrate DevFluent to React
 
-We are going to build a stunning, highly premium website in our empty workspace. Below are three high-end design concepts. Please select one or specify your custom requirements.
+This plan outlines the technical steps to port the DevFluent Single Page Application (SPA) into React using Vite. We will implement modular React components to manage pages, tabs, authentication states, booking calendar, commerce shopping cart, security checkouts (Stripe/MTN/Orange MoMo), simulated AI drawer, Web Terminal simulator, and daily streak persistence.
 
-## User Feedback Required
-> [!IMPORTANT]
-> Choose one of the following concepts, or provide your custom project requirements:
+We will preserve the exact visual aesthetics, style properties, gradients, and custom responsive layouts defined in [index.css](file:///c:/Users/NICK%20TECH/prompt/index.css) by importing it directly into our React component tree.
 
-### Concept 1: Futuristic SaaS Landing Page with Analytics Dashboard Mockup
-*   **Aesthetics**: Glassmorphism, deep dark mode (charcoal/dark blue), bright glowing radial gradients (teal, indigo, purple), modern Outfit/Inter typography, animated floating items.
-*   **Key Features**:
-    1.  Interactive Hero section with glowing tech elements.
-    2.  Product Feature Grid with glowing border cards and smooth hover effects.
-    3.  Live pricing tier calculator/toggle.
-    4.  Interactive client metrics dashboard mockup with charts (using SVGs/Canvas for fluid animations) and search filters.
-    5.  Testimonial slider and newsletter subscribe form with micro-animations.
+## Proposed Changes
 
-### Concept 2: Elegant Fine Dining Restaurant Website (The Culinary Gallery)
-*   **Aesthetics**: Sleek charcoal backgrounds, warm gold/bronze accents, refined serif headings (e.g., Playfair Display), soft fading transitions, rich photography layout.
-*   **Key Features**:
-    1.  Full-width background header with sensory headline.
-    2.  Filterable Interactive Menu (All, Starters, Mains, Desserts, Wine) showing detailed descriptions and diet tags (vegan, GF).
-    3.  Interactive Reservation form with inline custom feedback and beautiful completion animation.
-    4.  Chef's Showcase with a before-and-after type sliding gallery showing plating processes or ingredients.
-    5.  Customer review slider with transition animation.
+We will introduce a standard Vite + React project configuration in the workspace:
 
-### Concept 3: Luxury Architect / Interior Designer Portfolio
-*   **Aesthetics**: Bright minimalist style, earthy sand/beige/stone tones, vast clean space, crisp modern sans-serif typography, large elegant editorial layouts.
-*   **Key Features**:
-    1.  Horizontal-scrolling featured project showcase.
-    2.  Comparison slider showing raw construction vs. finished interior space.
-    3.  Immersive interactive product viewer/modal details.
-    4.  Clean interactive design consultation planner (multi-step form).
+### Configuration & Project Toolchain
+*   `[NEW]` [package.json](file:///c:/Users/NICK%20TECH/prompt/package.json) - Defines npm packages: `react`, `react-dom` as dependencies, and `vite`, `@vitejs/plugin-react` as devDependencies. Also lists start/build scripts.
+*   `[NEW]` [vite.config.js](file:///c:/Users/NICK%20TECH/prompt/vite.config.js) - Configurations for the Vite bundler with `@vitejs/plugin-react`.
+*   `[MODIFY]` [index.html](file:///c:/Users/NICK%20TECH/prompt/index.html) - Adapt the HTML to render `<div id="root"></div>` for React mounting, keeping the ambient glowing background decoration and removing the hardcoded layout which is moving to React.
+
+### React Component Architecture
+We will structure our application in the `src/` directory:
+*   `[NEW]` [src/main.jsx](file:///c:/Users/NICK%20TECH/prompt/src/main.jsx) - Project bootstrapping script mounting React to the `#root` element.
+*   `[NEW]` [src/App.jsx](file:///c:/Users/NICK%20TECH/prompt/src/App.jsx) - Main layout coordination. Houses global application state and renders sub-layouts.
+*   `[NEW]` [src/components/Sidebar.jsx](file:///c:/Users/NICK%20TECH/prompt/src/components/Sidebar.jsx) - Navigation panel managing pages switching.
+*   `[NEW]` [src/components/Header.jsx](file:///c:/Users/NICK%20TECH/prompt/src/components/Header.jsx) - Header area containing content search filter, light/dark theme toggler, offline mode toggler, and user profile session widget.
+*   `[NEW]` [src/pages/Home.jsx](file:///c:/Users/NICK%20TECH/prompt/src/pages/Home.jsx) - Renders lessons, rating controls, simulated video timelines tracker, comments guild discuss panel, and interactive Javascript sandbox editor compiler.
+*   `[NEW]` [src/pages/About.jsx](file:///c:/Users/NICK%20TECH/prompt/src/pages/About.jsx) - Product concepts visual slides summary.
+*   `[NEW]` [src/pages/Services.jsx](file:///c:/Users/NICK%20TECH/prompt/src/pages/Services.jsx) - Reservation booking scheduler calendar.
+*   `[NEW]` [src/pages/Shop.jsx](file:///c:/Users/NICK%20TECH/prompt/src/pages/Shop.jsx) - E-commerce dev listings store and active checkout panel.
+*   `[NEW]` [src/pages/Contact.jsx](file:///c:/Users/NICK%20TECH/prompt/src/pages/Contact.jsx) - Form dispatcher details.
+*   `[NEW]` [src/pages/Settings.jsx](file:///c:/Users/NICK%20TECH/prompt/src/pages/Settings.jsx) - WordPress-style layout CMS updater input blocks, and profile settings.
+*   `[NEW]` [src/pages/Profile.jsx](file:///c:/Users/NICK%20TECH/prompt/src/pages/Profile.jsx) - Auth tab widgets (Login/Signup/Reset) and logged user statistics logs dashboard.
+*   `[NEW]` [src/components/CheckoutModal.jsx](file:///c:/Users/NICK%20TECH/prompt/src/components/CheckoutModal.jsx) - Transact auth forms for Stripe or African MoMo options.
+*   `[NEW]` [src/components/AIDrawer.jsx](file:///c:/Users/NICK%20TECH/prompt/src/components/AIDrawer.jsx) - Floating helper chat query module (supports French, English, and Google backlinks).
+
+### Clean-Up
+*   `[DELETE]` [app.js](file:///c:/Users/NICK%20TECH/prompt/app.js) - Removed since all logic is migrated into the React components.
 
 ---
 
-## Proposed Changes
-We will create:
-*   `[NEW]` [index.html](file:///c:/Users/Nick%20TECH/prompt/index.html) - The primary entry point containing semantic HTML and SEO meta tags.
-*   `[NEW]` [index.css](file:///c:/Users/Nick%20TECH/prompt/index.css) - Modern, responsive CSS styling using variables, custom color palettes, animations, and typography.
-*   `[NEW]` [app.js](file:///c:/Users/Nick%20TECH/prompt/app.js) - JavaScript logic for interactions (menu filters, slider carousels, forms, and mock dashboard charts).
-
 ## Verification Plan
-### Automated & Manual Verification
-We will use the **Browser tool** or run a local server and verify using the following checklist:
-1. Validate responsive layouts on Mobile, Tablet, and Desktop resolutions.
-2. Verify all custom forms (reservations/pricing/consultations) have built-in validation.
-3. Test all JavaScript interactions: slides, filter changes, and dynamic stats.
-4. Ensure zero HTML/CSS/JS reference errors in the console.
+
+### Automated/Tool Verification
+No pre-existing test files exist in the project. We will verify the compilation and runtime behavior of the developed components:
+1. Compile the build script: `npm run build` to verify webpack/Vite configuration validity and make sure compile outputs exit with code 0.
+2. We will start the development server using `npm run dev` and navigate the web application utilizing the compiler's subagent page tools.
+
+### Manual Verification
+Review critical interactive paths:
+1. **Interactive Navigation**: Click through each link (Home, About, Services, Shop, Contact, Settings, Profile) to confirm tab toggling works correctly without error.
+2. **Javascript Sandbox Interpreter**: Click a lesson, scroll to editor, write a script (e.g., `return 10 + 20`), and run compilation check to see results render under sandbox logs.
+3. **Daily Streak Progress Logs**: Relog on profile page and check if the daily streak count increments and logs render inside listing slots.
+4. **African MOMO (MTN/Orange) Verification**: Load shop products, add item to basket, click checkout. Input momo phone number, confirm verification code challenges (simulate SMS code: `9982`) and finalize validation flow.
