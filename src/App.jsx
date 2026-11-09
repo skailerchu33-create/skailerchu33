@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 const baseSchedule = [
   {
@@ -64,11 +64,35 @@ const noteCards = [
 ];
 
 function App() {
+  const [authMode, setAuthMode] = useState('login');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+
+  const [resetEmail, setResetEmail] = useState('');
+
   const [activeTab, setActiveTab] = useState('Overview');
   const [selectedDay, setSelectedDay] = useState('Mon');
-  const [prompt, setPrompt] = useState('Generate a timetable that balances my classes, study time, and revision without overloading my evenings.');
+  const [prompt, setPrompt] = useState(
+    'Generate a timetable that balances my classes, study time, and revision without overloading my evenings.'
+  );
   const [uploadedFile, setUploadedFile] = useState(null);
   const [schedule, setSchedule] = useState(baseSchedule);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('studyflow_user');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   const currentDaySchedule = useMemo(
     () => schedule.find((item) => item.day === selectedDay) || schedule[0],
@@ -78,6 +102,60 @@ function App() {
   const totalVisits = visitData.reduce((sum, value) => sum + value, 0);
   const averageVisit = Math.round(totalVisits / visitData.length);
   const adherenceRate = 84;
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+
+    if (!loginEmail || !loginPassword) return;
+
+    const user = {
+      name: loginEmail.split('@')[0].charAt(0).toUpperCase() + loginEmail.split('@')[0].slice(1),
+      email: loginEmail,
+      premium: false,
+    };
+
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    localStorage.setItem('studyflow_user', JSON.stringify(user));
+
+    setLoginEmail('');
+    setLoginPassword('');
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+
+    if (!registerName || !registerEmail || !registerPassword) return;
+
+    const user = {
+      name: registerName,
+      email: registerEmail,
+      premium: false,
+    };
+
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    localStorage.setItem('studyflow_user', JSON.stringify(user));
+
+    setRegisterName('');
+    setRegisterEmail('');
+    setRegisterPassword('');
+  };
+
+  const handleReset = (e) => {
+    e.preventDefault();
+    if (!resetEmail) return;
+
+    window.alert(`Password reset link sent to ${resetEmail}`);
+    setResetEmail('');
+    setAuthMode('login');
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('studyflow_user');
+  };
 
   const generateTimetable = () => {
     setSchedule((prev) =>
@@ -95,6 +173,136 @@ function App() {
       }))
     );
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="auth-shell">
+        <div className="auth-card">
+          <div className="auth-badge">StudyFlow</div>
+
+          <div className="auth-header">
+            <h1>Student Portal</h1>
+            <p>Manage your timetable, notes, and study routines.</p>
+          </div>
+
+          <div className="auth-tabs">
+            <button
+              type="button"
+              className={authMode === 'login' ? 'auth-tab active' : 'auth-tab'}
+              onClick={() => setAuthMode('login')}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              className={authMode === 'signup' ? 'auth-tab active' : 'auth-tab'}
+              onClick={() => setAuthMode('signup')}
+            >
+              Register
+            </button>
+            <button
+              type="button"
+              className={authMode === 'reset' ? 'auth-tab active' : 'auth-tab'}
+              onClick={() => setAuthMode('reset')}
+            >
+              Reset
+            </button>
+          </div>
+
+          {authMode === 'login' && (
+            <form className="auth-form" onSubmit={handleLogin}>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="student@school.edu"
+                  required
+                />
+              </label>
+
+              <label>
+                Password
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </label>
+
+              <button type="submit" className="primary-btn auth-submit">
+                Sign In
+              </button>
+            </form>
+          )}
+
+          {authMode === 'signup' && (
+            <form className="auth-form" onSubmit={handleRegister}>
+              <label>
+                Full Name
+                <input
+                  type="text"
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
+                  placeholder="Jane Doe"
+                  required
+                />
+              </label>
+
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  placeholder="student@school.edu"
+                  required
+                />
+              </label>
+
+              <label>
+                Password
+                <input
+                  type="password"
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                  minLength="6"
+                  required
+                />
+              </label>
+
+              <button type="submit" className="primary-btn auth-submit">
+                Create Account
+              </button>
+            </form>
+          )}
+
+          {authMode === 'reset' && (
+            <form className="auth-form" onSubmit={handleReset}>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="student@school.edu"
+                  required
+                />
+              </label>
+
+              <button type="submit" className="primary-btn auth-submit">
+                Send Reset Link
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="student-dashboard">
@@ -126,12 +334,19 @@ function App() {
         <header className="topbar">
           <div>
             <p className="eyebrow">Student dashboard</p>
-            <h1>Welcome back, Daniel</h1>
+            <h1>Welcome back, {currentUser?.name || 'Student'}</h1>
           </div>
 
           <div className="topbar-actions">
-            <button className="ghost-btn">Export</button>
-            <button className="primary-btn">Generate plan</button>
+            <button className="ghost-btn" type="button">
+              Export
+            </button>
+            <button className="primary-btn" type="button">
+              Generate plan
+            </button>
+            <button className="ghost-btn" type="button" onClick={handleLogout}>
+              Log out
+            </button>
           </div>
         </header>
 
@@ -176,7 +391,9 @@ function App() {
                   <input type="file" onChange={(e) => setUploadedFile(e.target.files?.[0] || null)} />
                   <span>{uploadedFile ? uploadedFile.name : 'Upload notes or timetable'}</span>
                 </label>
-                <button className="primary-btn" onClick={generateTimetable}>Generate</button>
+                <button className="primary-btn" onClick={generateTimetable} type="button">
+                  Generate
+                </button>
               </div>
             </div>
 
@@ -194,6 +411,7 @@ function App() {
                     key={day.day}
                     className={selectedDay === day.day ? 'day-tab active' : 'day-tab'}
                     onClick={() => setSelectedDay(day.day)}
+                    type="button"
                   >
                     {day.day}
                   </button>
@@ -282,4 +500,3 @@ function App() {
 }
 
 export default App;
-
