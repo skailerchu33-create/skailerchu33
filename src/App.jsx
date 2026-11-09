@@ -1,308 +1,284 @@
-import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import AIDrawer from './components/AIDrawer';
-import CheckoutModal from './components/CheckoutModal';
-import TerminalPanel from './components/TerminalPanel';
+import React, { useMemo, useState } from 'react';
 
-// Pages
-import Home from './pages/Home';
-import About from './pages/About';
-import Services from './pages/Services';
-import Shop from './pages/Shop';
-import Contact from './pages/Contact';
-import Settings from './pages/Settings';
-import Profile from './pages/Profile';
+const baseSchedule = [
+  {
+    day: 'Mon',
+    items: [
+      { time: '08:00', title: 'Math revision', type: 'Study' },
+      { time: '10:30', title: 'Lecture notes', type: 'Reading' },
+      { time: '15:00', title: 'Group project', type: 'Team' },
+      { time: '19:00', title: 'Practice test', type: 'Exam Prep' },
+    ],
+  },
+  {
+    day: 'Tue',
+    items: [
+      { time: '08:30', title: 'Chemistry recap', type: 'Study' },
+      { time: '11:00', title: 'AI summary session', type: 'Notes' },
+      { time: '14:00', title: 'Problem set', type: 'Practice' },
+      { time: '18:30', title: 'Review and quiz', type: 'Revision' },
+    ],
+  },
+  {
+    day: 'Wed',
+    items: [
+      { time: '09:00', title: 'Physics lab review', type: 'Lab' },
+      { time: '12:00', title: 'Reading block', type: 'Reading' },
+      { time: '16:30', title: 'Project checkpoint', type: 'Project' },
+      { time: '20:00', title: 'Light recap', type: 'Short Study' },
+    ],
+  },
+  {
+    day: 'Thu',
+    items: [
+      { time: '07:30', title: 'Essay draft', type: 'Writing' },
+      { time: '10:00', title: 'History reading', type: 'Reading' },
+      { time: '13:30', title: 'Coding practice', type: 'Practice' },
+      { time: '18:00', title: 'Math drill', type: 'Study' },
+    ],
+  },
+  {
+    day: 'Fri',
+    items: [
+      { time: '08:00', title: 'Weekly review', type: 'Revision' },
+      { time: '11:30', title: 'Note summary', type: 'AI Assist' },
+      { time: '15:00', title: 'Presentation prep', type: 'Presentation' },
+      { time: '19:30', title: 'Rest and reset', type: 'Break' },
+    ],
+  },
+  {
+    day: 'Sat',
+    items: [
+      { time: '09:30', title: 'Mock test', type: 'Exam Prep' },
+      { time: '12:30', title: 'Homework review', type: 'Study' },
+      { time: '16:00', title: 'Planning session', type: 'Planning' },
+    ],
+  },
+];
 
-// Data
-import { DEFAULT_TUTORIALS } from './data';
+const visitData = [40, 52, 68, 60, 82, 90, 76];
+const noteCards = [
+  'Summarized key points from long lecture notes in under 2 minutes.',
+  'Detected the main ideas from the chapter and listed revision priorities.',
+  'Converted messy notes into a clear study checklist for the week.',
+];
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('home');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isOffline, setIsOffline] = useState(false);
-  const [isAIDrawerOpen, setIsAIDrawerOpen] = useState(false);
-  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isSidebarActive, setIsSidebarActive] = useState(false);
+function App() {
+  const [activeTab, setActiveTab] = useState('Overview');
+  const [selectedDay, setSelectedDay] = useState('Mon');
+  const [prompt, setPrompt] = useState('Generate a timetable that balances my classes, study time, and revision without overloading my evenings.');
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [schedule, setSchedule] = useState(baseSchedule);
 
-  // Toast States
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastBg, setToastBg] = useState("hsla(var(--primary-hsl), 0.9)");
-  const [toastTimeoutId, setToastTimeoutId] = useState(null);
+  const currentDaySchedule = useMemo(
+    () => schedule.find((item) => item.day === selectedDay) || schedule[0],
+    [schedule, selectedDay]
+  );
 
-  // Tutorials State
-  const [tutorials, setTutorials] = useState(() => {
-    const saved = localStorage.getItem('df_tutorials');
-    return saved ? JSON.parse(saved) : DEFAULT_TUTORIALS;
-  });
+  const totalVisits = visitData.reduce((sum, value) => sum + value, 0);
+  const averageVisit = Math.round(totalVisits / visitData.length);
+  const adherenceRate = 84;
 
-  // CMS Content State
-  const [cms, setCms] = useState(() => {
-    const saved = localStorage.getItem('df_cms');
-    return saved ? JSON.parse(saved) : {
-      heroTitle: "Visual Learning and Sandbox Environments",
-      heroPara: "Explore code lexical contexts, pointer allocations, closures generator trees, and simulation playback loops directly inside browser buffers."
-    };
-  });
-
-  // User session state
-  const [userSession, setUserSession] = useState(() => {
-    const saved = localStorage.getItem('df_logged_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  // Booking schedule slots state
-  const [bookedSlots, setBookedSlots] = useState(() => {
-    const saved = localStorage.getItem('df_booked_slots');
-    return saved ? JSON.parse(saved) : {
-      '15': ['09:00 AM'],
-      '18': ['11:30 AM', '02:00 PM']
-    };
-  });
-
-  // Daily Streak logs state
-  const [progress, setProgress] = useState({
-    streak: 1,
-    lastLogin: '',
-    loginLogs: []
-  });
-
-  // Active Sandbox Workspaces states
-  const [activeSandboxId, setActiveSandboxId] = useState(null);
-  const [sandboxCode, setSandboxCode] = useState("");
-  const [sandboxConsole, setSandboxConsole] = useState("> Console output will render here after execution...");
-
-  // Sync booked slots
-  useEffect(() => {
-    localStorage.setItem('df_booked_slots', JSON.stringify(bookedSlots));
-  }, [bookedSlots]);
-
-  // Sync light/dark class on body element
-  useEffect(() => {
-    if (!isDarkMode) {
-      document.body.classList.add('light-mode');
-    } else {
-      document.body.classList.remove('light-mode');
-    }
-  }, [isDarkMode]);
-
-  // Toast Functionality
-  const triggerToast = (msg, backdrop) => {
-    if (toastTimeoutId) clearTimeout(toastTimeoutId);
-    setToastMessage(msg);
-    setToastBg(backdrop || "hsla(var(--primary-hsl), 0.9)");
-
-    const id = setTimeout(() => {
-      setToastMessage("");
-    }, 2800);
-    setToastTimeoutId(id);
-  };
-
-  // Streak Tracker Loader
-  useEffect(() => {
-    const todayStr = new Date().toDateString();
-    const localProg = localStorage.getItem('df_user_progress');
-    let data;
-
-    if (localProg) {
-      data = JSON.parse(localProg);
-      if (data.lastLogin !== todayStr) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (data.lastLogin === yesterday.toDateString()) {
-          data.streak += 1;
-        } else {
-          data.streak = 1;
-        }
-        data.lastLogin = todayStr;
-        data.loginLogs.unshift(new Date().toLocaleString());
-        if (data.loginLogs.length > 5) data.loginLogs.pop();
-        localStorage.setItem('df_user_progress', JSON.stringify(data));
-      }
-    } else {
-      data = {
-        streak: 1,
-        lastLogin: todayStr,
-        loginLogs: [new Date().toLocaleString()]
-      };
-      localStorage.setItem('df_user_progress', JSON.stringify(data));
-    }
-    setProgress(data);
-  }, []);
-
-  const runSandboxCode = (code) => {
-    let logsArray = [];
-    const nativeLog = console.log;
-    console.log = function (...args) {
-      logsArray.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '));
-    };
-
-    try {
-      const res = new Function(code)();
-      let out = logsArray.map(l => `[log] ${l}`).join('\n');
-      if (res !== undefined) out += `\n[return] => ${res}`;
-      console.log = nativeLog;
-      return { success: true, logs: out || "> Code execution completed synchronously with no visual logs output output." };
-    } catch (e) {
-      console.log = nativeLog;
-      return { success: false, logs: `[compiler error log]: ${e.message}` };
-    }
-  };
-
-  const handleCheckoutSuccess = (methodName) => {
-    setUserSession(prev => {
-      if (prev) {
-        const updated = { ...prev, premium: true };
-        localStorage.setItem('df_logged_user', JSON.stringify(updated));
-        return updated;
-      }
-      return prev;
-    });
-    setCartItems([]);
-    triggerToast(`✅ Payment authorized via ${methodName}! Granted Premium Access.`);
-  };
-
-  const renderPage = () => {
-    switch (activeTab) {
-      case 'home':
-        return (
-          <Home
-            searchQuery={searchQuery}
-            isOffline={isOffline}
-            tutorials={tutorials}
-            setTutorials={setTutorials}
-            cms={cms}
-            triggerToast={triggerToast}
-            currentUser={userSession}
-            sandboxCode={sandboxCode}
-            setSandboxCode={setSandboxCode}
-            sandboxConsole={sandboxConsole}
-            setSandboxConsole={setSandboxConsole}
-            activeSandboxId={activeSandboxId}
-            setActiveSandboxId={setActiveSandboxId}
-            setActiveTab={setActiveTab}
-          />
-        );
-      case 'about':
-        return <About />;
-      case 'services':
-        return (
-          <Services
-            isOffline={isOffline}
-            bookedSlots={bookedSlots}
-            setBookedSlots={setBookedSlots}
-            triggerToast={triggerToast}
-          />
-        );
-      case 'shop':
-        return (
-          <Shop
-            cartItems={cartItems}
-            setCartItems={setCartItems}
-            onCheckout={() => setIsCheckoutOpen(true)}
-            isOffline={isOffline}
-            triggerToast={triggerToast}
-          />
-        );
-      case 'contact':
-        return <Contact triggerToast={triggerToast} />;
-      case 'settings':
-        return (
-          <Settings
-            currentUser={userSession}
-            setCurrentUser={setUserSession}
-            cms={cms}
-            setCms={setCms}
-            triggerToast={triggerToast}
-          />
-        );
-      case 'profile':
-        return (
-          <Profile
-            currentUser={userSession}
-            setCurrentUser={setUserSession}
-            progress={progress}
-            setProgress={setProgress}
-            tutorials={tutorials}
-            setActiveSandboxId={setActiveSandboxId}
-            setSandboxCode={setSandboxCode}
-            setActiveTab={setActiveTab}
-            triggerToast={triggerToast}
-          />
-        );
-      default:
-        return <Home searchQuery={searchQuery} />;
-    }
+  const generateTimetable = () => {
+    setSchedule((prev) =>
+      prev.map((day) => ({
+        ...day,
+        items: day.items.map((entry, index) => ({
+          ...entry,
+          title:
+            index === 0 && day.day === 'Mon'
+              ? 'Focused study block'
+              : index === 1 && day.day === 'Tue'
+                ? 'AI note review'
+                : entry.title,
+        })),
+      }))
+    );
   };
 
   return (
-    <div className={`app-container ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isSidebarActive={isSidebarActive}
-        setIsSidebarActive={setIsSidebarActive}
-      />
-
-      <div className="main-viewport">
-        <Header
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          isDarkMode={isDarkMode}
-          setIsDarkMode={setIsDarkMode}
-          isOffline={isOffline}
-          setIsOffline={setIsOffline}
-          userSession={userSession}
-          setActiveTab={setActiveTab}
-          toggleAIDrawer={() => setIsAIDrawerOpen((prev) => !prev)}
-          setIsSidebarActive={setIsSidebarActive}
-          triggerToast={triggerToast}
-        />
-
-        <main className="content-area">{renderPage()}</main>
-      </div>
-
-      <AIDrawer isOpen={isAIDrawerOpen} onClose={() => setIsAIDrawerOpen(false)} isOffline={isOffline} />
-
-      {/* Terminal Floating Trigger Fab */}
-      <div id="terminal-fab" className="terminal-trigger-fab" onClick={() => setIsTerminalOpen(t => !t)} style={{ cursor: "pointer" }}>
-        📟
-      </div>
-
-      {isTerminalOpen && (
-        <TerminalPanel
-          activeCode={sandboxCode}
-          streak={progress.streak}
-          lastLoginDate={progress.lastLogin}
-          loginLogsLength={progress.loginLogs.length}
-          latestVisit={progress.loginLogs[0] || 'None'}
-          isOffline={isOffline}
-          toggleTheme={(theme) => setIsDarkMode(theme === 'dark')}
-          runSandboxCode={(code) => {
-            const out = runSandboxCode(code);
-            setSandboxConsole(out.logs);
-            return out;
-          }}
-        />
-      )}
-
-      {isCheckoutOpen && (
-        <CheckoutModal
-          cartItems={cartItems}
-          onClose={() => setIsCheckoutOpen(false)}
-          onSuccess={handleCheckoutSuccess}
-        />
-      )}
-
-      {/* Toast Alert Message Popup Block */}
-      {toastMessage && (
-        <div className="toast active" style={{ backgroundColor: toastBg }}>
-          {toastMessage}
+    <div className="student-dashboard">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark">S</div>
+          <span>StudyFlow</span>
         </div>
-      )}
+
+        <nav className="nav">
+          {['Overview', 'Timetable', 'Notes', 'Insights'].map((tab) => (
+            <button
+              key={tab}
+              className={activeTab === tab ? 'nav-item active' : 'nav-item'}
+              onClick={() => setActiveTab(tab)}
+            >
+              <span>{tab}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-card">
+          <p className="label">Daily Goal</p>
+          <h3>4 focused study blocks</h3>
+        </div>
+      </aside>
+
+      <main className="main-panel">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Student dashboard</p>
+            <h1>Welcome back, Daniel</h1>
+          </div>
+
+          <div className="topbar-actions">
+            <button className="ghost-btn">Export</button>
+            <button className="primary-btn">Generate plan</button>
+          </div>
+        </header>
+
+        <section className="stats-grid">
+          <div className="stat-card">
+            <p>Study hours</p>
+            <h2>18.5h</h2>
+          </div>
+          <div className="stat-card">
+            <p>Timetable respect</p>
+            <h2>{adherenceRate}%</h2>
+          </div>
+          <div className="stat-card">
+            <p>Platform visits</p>
+            <h2>{averageVisit}</h2>
+          </div>
+          <div className="stat-card">
+            <p>Notes summarized</p>
+            <h2>127</h2>
+          </div>
+        </section>
+
+        <section className="content-grid">
+          <div className="left-panel">
+            <div className="panel-box planner-box">
+              <div className="panel-header">
+                <div>
+                  <p className="label">Planner</p>
+                  <h3>Generate study timetable</h3>
+                </div>
+                <span className="mini-badge">AI</span>
+              </div>
+
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe your routine, classes, and preferred study hours"
+              />
+
+              <div className="upload-row">
+                <label className="upload-box">
+                  <input type="file" onChange={(e) => setUploadedFile(e.target.files?.[0] || null)} />
+                  <span>{uploadedFile ? uploadedFile.name : 'Upload notes or timetable'}</span>
+                </label>
+                <button className="primary-btn" onClick={generateTimetable}>Generate</button>
+              </div>
+            </div>
+
+            <div className="panel-box schedule-box">
+              <div className="panel-header">
+                <div>
+                  <p className="label">Timetable</p>
+                  <h3>Weekly schedule</h3>
+                </div>
+              </div>
+
+              <div className="day-tabs">
+                {schedule.map((day) => (
+                  <button
+                    key={day.day}
+                    className={selectedDay === day.day ? 'day-tab active' : 'day-tab'}
+                    onClick={() => setSelectedDay(day.day)}
+                  >
+                    {day.day}
+                  </button>
+                ))}
+              </div>
+
+              <div className="schedule-list">
+                {currentDaySchedule.items.map((item) => (
+                  <div key={`${item.day}-${item.time}`} className="schedule-item">
+                    <span className="time">{item.time}</span>
+                    <div className="task-info">
+                      <h4>{item.title}</h4>
+                      <p>{item.type}</p>
+                    </div>
+                    <span className="task-tag">{item.type}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="right-panel">
+            <div className="panel-box chart-box">
+              <div className="panel-header">
+                <div>
+                  <p className="label">Usage</p>
+                  <h3>Platform entry graph</h3>
+                </div>
+              </div>
+
+              <div className="chart">
+                {visitData.map((value, index) => (
+                  <div key={index} className="bar-group">
+                    <div className="bar-wrapper">
+                      <div className="bar" style={{ height: `${value}%` }} />
+                    </div>
+                    <span>{['M', 'T', 'W', 'T', 'F', 'S', 'S'][index]}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="chart-summary">
+                <strong>{totalVisits}</strong>
+                <span>total entries this week</span>
+              </div>
+            </div>
+
+            <div className="panel-box score-box">
+              <div className="panel-header">
+                <div>
+                  <p className="label">Average</p>
+                  <h3>Adherence score</h3>
+                </div>
+              </div>
+
+              <div className="score-ring" style={{ '--score': `${adherenceRate}%` }}>
+                <div className="score-ring-inner">
+                  <strong>{adherenceRate}%</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="panel-box assistant-box">
+              <div className="panel-header">
+                <div>
+                  <p className="label">Assistant</p>
+                  <h3>Note summary</h3>
+                </div>
+                <span className="mini-badge google">G</span>
+              </div>
+
+              <div className="assistant-list">
+                {noteCards.map((note, index) => (
+                  <div key={index} className="assistant-item">
+                    <span className="dot" />
+                    <p>{note}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
+
+export default App;
